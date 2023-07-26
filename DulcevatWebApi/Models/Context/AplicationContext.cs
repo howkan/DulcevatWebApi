@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿namespace DulcevatWebApi.Models.Context;
 
-namespace DulcevatWebApi.Models.Context
+public class AplicationContext : DbContext
 {
-    public class AplicationContext : DbContext
-    {
-        public DbSet<Product> Products { get; set; }
+    public DbSet<Product> Products { get; set; }
 
-        public AplicationContext(DbContextOptions<AplicationContext> options) : base(options) { }
-    }
+    public AplicationContext(DbContextOptions<AplicationContext> options) : base(options) { }
+
+
+
 }

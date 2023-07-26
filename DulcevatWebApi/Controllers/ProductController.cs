@@ -1,73 +1,81 @@
-﻿using DulcevatWebApi.Models;
-using DulcevatWebApi.Models.Context;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿namespace DulcevatWebApi.Controllers;
 
-namespace DulcevatWebApi.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class ProductController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductController : ControllerBase
+    private readonly AplicationContext _context;
+
+    public ProductController(AplicationContext context)
     {
-        private readonly AplicationContext _context;
+        _context = context;
+    }
 
-        public ProductController(AplicationContext context)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    {
+        return await _context.Products.ToListAsync();
+    }
+
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Product>> GetProducts(Guid id)
+    {
+        var products = await _context.Products.FindAsync(id);
+
+        if (products == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        return products;
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<Product>> DeleteProducts(Guid id)
+    {
+        var producs = await _context.Products.FindAsync(id);
+
+        if (producs == null)
         {
-            return await _context.Products.ToListAsync();
+            return NotFound();
         }
 
+        _context.Products.Remove(producs);
+        await _context.SaveChangesAsync();
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProducts(int id)
+        return producs;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateProduct(Product product)
+    {
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetProducts), new { id = product.ProductID }, product);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateProducts(Guid id, Product product)
+    {
+        if (id != product.ProductID)
         {
-            var products = await _context.Products.FindAsync(id);
-            
-            if(products == null)
-            {
-                return NotFound();
-            }
-            return products;
+            return BadRequest();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Product>> DeleteProducts(int id)
-        {
-            var producs = await _context.Products.FindAsync(id);
-            if(producs == null)
-            {
-                return NotFound();
-            }
-            _context.Products.Remove(producs);
-            await _context.SaveChangesAsync();
+        var findedProduct = await _context.Products.FirstOrDefaultAsync(s => s.ProductID == id);
 
-            return producs;
+        if (findedProduct == null)
+        {
+            return NotFound();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PostProduct(Product product)
-        {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            
-            return CreatedAtAction("GetProducts", new {id = product.ProductID}, product);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProducts(int id, Product product)
-        {
-            if(id != product.ProductID)
-            {
-                return BadRequest();
-            }
-            _context.Entry(product).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
+        findedProduct.ProductName = product.ProductName;
+        findedProduct.ProductPrice = product.ProductPrice;
+        findedProduct.ProductDescription = product.ProductDescription;
+        
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }
